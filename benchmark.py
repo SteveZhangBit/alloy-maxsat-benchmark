@@ -1,0 +1,144 @@
+import subprocess
+import os
+from os import path
+import shutil
+import signal
+import sys
+
+from random import randint
+from random import random
+
+def generate(tags, persons, max_tags, num_tables, min_persons, max_persons):
+  person_tags = []
+  for x in range(0, persons):
+    x_tags = []
+    value = randint(0, max_tags)
+    t=0
+    for y in range (0, tags):
+      if t == max_tags:
+        break
+      v = random()
+      if v <= float(value / tags):
+        x_tags.append("P" + str(x) + "->" + "T" + str(y))
+        t = t + 1
+    if len(x_tags) > 0:
+      person_tags.append("+".join(x_tags))
+  person_tags = "+\n    ".join(person_tags)
+  als = f"""
+abstract sig Person {{
+  tags: set Tag
+}}
+one sig {",".join(["P" + str(i) for i in range(persons)])} extends Person {{}}
+
+abstract sig Tag {{}}
+one sig {",".join(["T" + str(i) for i in range(tags)])} extends Tag {{}}
+
+fact {{
+  tags = {person_tags}
+}}
+
+sig Table {{
+  seat: set Person,
+}} {{
+  #seat < {max_persons + 1}
+  #seat > {min_persons - 1}
+}}
+
+fact {{
+  all p: Person | one seat.p
+}}
+"""
+  table_based = als + f"""
+run {{
+  // table-based
+  all t: Table | softno t.seat.tags
+}} for {num_tables} Table, 5 int
+"""
+  tag_based = als + f"""
+run {{
+	// tag-based
+	all t: Tag | softno seat.tags.t
+}} for {num_tables} Table, 5 int
+"""
+  return table_based, tag_based
+
+def run(filename, partitions=False):
+  cmd = [
+    "java",
+    "-Djava.library.path=/home/cj/Documents/maxsattest/open-wbo",
+    "-cp",
+    "/home/cj/Documents/maxsattest/org.alloytools.alloy.dist.jar",
+    "edu.mit.csail.sdg.alloy4whole.OpenWBOCLI",
+    "-p",
+    filename
+  ] if partitions else [
+    "java",
+    "-Djava.library.path=/home/cj/Documents/maxsattest/open-wbo",
+    "-cp",
+    "/home/cj/Documents/maxsattest/org.alloytools.alloy.dist.jar",
+    "edu.mit.csail.sdg.alloy4whole.OpenWBOCLI",
+    filename
+  ]
+
+  with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, preexec_fn=os.setsid) as proc:
+    try:
+      out = proc.communicate(timeout=60)[0]
+      # print(out)
+      if proc.returncode == 0:
+        idx = out.index(", time: ")
+        idx1 = out[idx:].index("ms")
+        result = out[idx+len(", time: "):idx+idx1]
+      else:
+        result = "N/A"
+    except subprocess.TimeoutExpired:
+      result = "N/A"
+      os.killpg(proc.pid, signal.SIGINT)
+    except Exception as e:
+      print(e)
+      result = "N/A"
+    finally:
+      return result
+
+
+if __name__ == "__main__":
+  if len(sys.argv) < 3:
+    print("Usage: benchmark.py <min_tag> <max_tag>")
+    exit(1)
+
+  print("filename,table-based without partitions,table-based with partitions,tag-based without partitions,tag-based with partitions")
+
+  outpath = path.join(os.getcwd(), "out")
+  if not path.exists(outpath):
+    os.mkdir(outpath)
+  # else:
+  #   shutil.rmtree(outpath)
+  #   os.mkdir(outpath)
+
+  for tag in range(int(sys.argv[1]), int(sys.argv[2])):
+    for p in range(20, 36):
+      min_p = 3
+      max_p = 7
+      
+      if 20 <= p < 24:
+        tab = 5
+      elif 24 <= p < 28:
+        tab = 6
+      elif 28 <= p < 32:
+        tab = 7
+      elif 32 <= p < 36:
+        tab = 8
+
+      table_based, tag_based = generate(tag, p, tag, tab, min_p, max_p)
+      table_filename = path.join(outpath, f"table_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
+      tag_filename = path.join(outpath, f"tag_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
+      with open(table_filename, "w") as f:
+        f.write(table_based)
+      with open(tag_filename, "w") as f:
+        f.write(tag_based)
+      
+      table_no_part_time = run(table_filename, False)
+      table_part_time = run(table_filename, True)
+      tag_no_part_time = run(tag_filename, False)
+      tag_part_time = run(tag_filename, True)
+      
+      print(f"{tag}_{p}_{tag}_{tab}_{min_p}_{max_p},{table_no_part_time},{table_part_time},{tag_no_part_time},{tag_part_time}")
