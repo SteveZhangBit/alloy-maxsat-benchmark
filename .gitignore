@@ -1,3 +1,5 @@
 .ipynb_checkpoints/
 open-wbo/
 out/
+__pycache__/
+*.zip

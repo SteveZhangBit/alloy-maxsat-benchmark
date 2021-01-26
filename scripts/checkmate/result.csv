@@ -1,0 +1,4 @@
+name,maxsat_time,maxsat_part_time,sat_time,num_inst
+flush_reload,184981,112798,90626,32
+meltdown,368253,340863,634071,706
+spectre,1133384,72939,1574394,1412
