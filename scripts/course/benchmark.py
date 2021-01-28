@@ -13,18 +13,20 @@ from util import run_sat, run_maxsat
 
 
 def generate(num_courses, num_stu, max_core, max_interests):
-  days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-  time = ["AM", "PM"]
+  lec_types = [
+    ["MonAM", "WedAM"],
+    ["MonAM", "WedAM", "FriPM"],
+    ["MonPM", "WedPM"],
+    ["TueAM", "ThuAM"],
+    ["TuePM", "TuePM"]
+  ]
+
   courses = []
   students = []
 
   # generate courses
   for i in range(num_courses):
-    np.random.shuffle(days)
-    lecs = days[:2]
-    lecs = list(map(lambda x: x + time[int(np.random.randint(2))], lecs))
-    courses.append(lecs)
-    
+    courses.append(lec_types[np.random.randint(len(lec_types))])
 
   # generate students cores and interests
   for _ in range(num_stu):
@@ -32,23 +34,23 @@ def generate(num_courses, num_stu, max_core, max_interests):
     tmp = list(range(num_courses))
     np.random.shuffle(tmp)
 
-    for _ in range(1, max_core):
-      t = set()
-      for c in cores:
-        t = t | set(courses[c])
+    t = set(courses[cores[0]])
+    for i in range(np.random.randint(max_core)):
       found = False
-      for c in tmp:
+      for c in tmp[i:]:
         if set(courses[c]) & t == set():
-          cores.append(c)
           found = True
+          cores.append(c)
+          t = t | set(courses[c])
           break
       if not found:
         break
     
+    np.random.shuffle(tmp)
     if len(cores) == 1:
-      interests = list(np.random.randint(num_courses, size=np.random.randint(1, max_interests+1)))
+      interests = tmp[:np.random.randint(1, max_interests+1)]
     else:
-      interests = list(np.random.randint(num_courses, size=np.random.randint(max_interests)))
+      interests = tmp[:np.random.randint(max_interests)]
       interests.append(cores[np.random.randint(len(cores))])
     
     cores = " + ".join(["C" + str(i) for i in cores])
@@ -130,15 +132,11 @@ pred validSchedule[courses: Student -> Course] {{
   return sat, maxsat
 
 
-if __name__ == "__main__":  
-  outpath = path.join(os.getcwd(), "out")
-  if not path.exists(outpath):
-    os.mkdir(outpath)
-
-  print("filename,maxsat,maxsat_part,sat,#inst")
+def mode2(outpath, timeout=180):
   max_core = 3
   max_interests = 6
   try:
+    print("filename,maxsat,maxsat_part,sat,#inst")
     for num_courses in range(10, 20):
       for num_stu in range(20, 30):
         sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
@@ -151,11 +149,97 @@ if __name__ == "__main__":
         with open(maxsat_filename, "w") as f:
           f.write(maxsat)
         
-        maxsat_result = run_maxsat(maxsat_filename, 180)
-        sat_result = run_sat(sat_filename, 180)
-        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_result},{sat_result}")
+        maxsat_time = run_maxsat(maxsat_filename, timeout=timeout)
+        maxsat_part_time = run_maxsat(maxsat_filename, timeout=timeout, partition=True)
+        sat_time = run_sat(sat_filename, timeout=timeout)
+        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_time},{maxsat_part_time},{sat_time}")
   except Exception as e:
     print(e)
   finally:
-    # shutil.rmtree(outpath)
+    shutil.rmtree(outpath)
     pass
+
+
+def mode1(outpath, timeout=180):
+  max_core = 3
+  max_interests = 6
+  params = [
+    (12, 22),
+    (14, 24),
+    (16, 26),
+    (18, 28)
+  ]
+  try:
+    print("filename,maxsat,maxsat_part,sat,#inst")
+    for num_courses, num_stu in params:
+      for i in range(5):
+        sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
+
+        sat_filename = path.join(outpath, f"sat_{num_courses}_{num_stu}_{max_core}_{max_interests}_{i}.als")
+        with open(sat_filename, "w") as f:
+          f.write(sat)
+
+        maxsat_filename = path.join(outpath, f"maxsat_{num_courses}_{num_stu}_{max_core}_{max_interests}_{i}.als")
+        with open(maxsat_filename, "w") as f:
+          f.write(maxsat)
+        
+        maxsat_time = run_maxsat(maxsat_filename, timeout=timeout)
+        maxsat_part_time = run_maxsat(maxsat_filename, timeout=timeout, partition=True)
+        sat_time = run_sat(sat_filename, timeout=timeout)
+        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_time},{maxsat_part_time},{sat_time}")
+  except Exception as e:
+    print(e)
+
+
+def mode0(outpath, timeout=180):
+  max_core = 3
+  max_interests = 6
+  params = [
+    (12, 22),
+    (14, 24),
+    (16, 26),
+    (18, 28)
+  ]
+  try:
+    print("filename,maxsat,maxsat_part,sat,#inst")
+    for num_courses, num_stu in params:
+      sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
+
+      sat_filename = path.join(outpath, f"sat_{num_courses}_{num_stu}_{max_core}_{max_interests}.als")
+      with open(sat_filename, "w") as f:
+        f.write(sat)
+
+      maxsat_filename = path.join(outpath, f"maxsat_{num_courses}_{num_stu}_{max_core}_{max_interests}.als")
+      with open(maxsat_filename, "w") as f:
+        f.write(maxsat)
+      
+      for _ in range(5):
+        maxsat_time = run_maxsat(maxsat_filename, timeout=timeout)
+        maxsat_part_time = run_maxsat(maxsat_filename, timeout=timeout, partition=True)
+        sat_time = run_sat(sat_filename, timeout=timeout)
+        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_time},{maxsat_part_time},{sat_time}")
+  except Exception as e:
+    print(e)
+
+
+if __name__ == "__main__":
+  if len(sys.argv) == 2:
+    if sys.argv[1] == "-m=0":
+      outpath = path.join(os.getcwd(), "mode0_out")
+      if not path.exists(outpath):
+        os.mkdir(outpath)
+      mode0(outpath)
+    elif sys.argv[1] == "-m=1":
+      outpath = path.join(os.getcwd(), "mode1_out")
+      if not path.exists(outpath):
+        os.mkdir(outpath)
+      mode1(outpath)
+    elif sys.argv[1] == "-m=2":
+      outpath = path.join(os.getcwd(), "mode2_out")
+      if not path.exists(outpath):
+        os.mkdir(outpath)
+      mode2(outpath)
+    else:
+      print("Usage: benchmark.py -m=[0|1|2]")
+  else:
+    print("Usage: benchmark.py -m=[0|1|2]")

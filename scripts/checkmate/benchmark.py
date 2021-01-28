@@ -12,12 +12,10 @@ from util import run_sat, run_maxsat
 
 if __name__ == "__main__":    
   print("name,maxsat,maxsat_part,sat,#inst")
+  timeout = 30 * 60
   for name in ["flush_reload", "meltdown", "spectre"]:
-    name = sys.argv[1]
-    print(name + ",", end="")
-
-    maxsat_result = run_maxsat(name + "_maxsat.als", 30*60)
-    print(maxsat_result + ",", end="")
-
-    sat_result = run_sat(name + ".als", 30*60)
-    print(f"{name},{maxsat_result},{sat_result}")
+    for _ in range(5):
+      maxsat_time = run_maxsat(name + "_maxsat.als", timeout=timeout)
+      maxsat_part_time = run_maxsat(name + "_maxsat.als", timeout=timeout, partition=True)
+      sat_time = run_sat(name + ".als", timeout=timeout)
+      print(f"{name},{maxsat_time},{maxsat_part_time},{sat_time}")
