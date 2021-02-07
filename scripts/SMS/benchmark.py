@@ -11,7 +11,7 @@ from random import random
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from util import run_sat, run_maxsat
+from util import benchmark, options
 
 
 def generate(num_tasks, max_deadline, max_process_time, max_frags, max_slack, max_dep):
@@ -58,8 +58,8 @@ def generate(num_tasks, max_deadline, max_process_time, max_frags, max_slack, ma
   c_str = ' +\n    '.join([' + '.join(i) for i in c])
   prev_str = ' +\n    '.join([' + '.join(p) for p in prev if len(p) > 0])
 
-  int_size = max(map(lambda x: int(x), d))
-  int_size = math.ceil(math.log2(int_size)) + 1
+  max_actual_deadline = max(map(lambda x: int(x), d))
+  int_size = math.ceil(math.log2(max_actual_deadline + max_process_time)) + 1
   
   als = f"""
 abstract sig Task {{
@@ -93,6 +93,8 @@ abstract sig Frag {{
   s: Int,
   c: Int,
   prev: lone Frag
+}} {{
+  s < {max_actual_deadline}
 }}
 {frags_sig_str}
 fact {{
@@ -150,37 +152,68 @@ run {{
 
   return sat, maxsat
 
-def mode0(outpath, timeout=600, repeat=5):
-  try:
-    params = [
-      (6, 20, 6, 3, 3, 2),
-      (8, 20, 6, 3, 3, 2),
-      (10, 20, 6, 3, 3, 2),
-      (12, 20, 6, 3, 3, 2),
-      (14, 20, 6, 3, 3, 2),
-    ]
-    for num_tasks, max_deadline, max_process_time, max_frags, max_slack, max_dep in params:
-      sat, maxsat = generate(num_tasks, max_deadline, max_process_time, max_frags, max_slack, max_dep)
-      sat_filename = path.join(outpath, f"sat_{num_tasks}_{max_deadline}_{max_process_time}_{max_frags}_{max_slack}_{max_dep}.als")
-      with open(sat_filename, "w") as f:
-        f.write(sat)
 
-      maxsat_filename = path.join(outpath, f"maxsat_{num_tasks}_{max_deadline}_{max_process_time}_{max_frags}_{max_slack}_{max_dep}.als")
-      with open(maxsat_filename, "w") as f:
-        f.write(maxsat)
-      
-      for _ in range(repeat):
-        maxsat_results = run_maxsat(maxsat_filename, timeout=timeout)
-        maxsat_part_results = 'N/A,N/A,N/A'
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f'maxsat_{num_tasks}_{max_deadline}_{max_process_time}_{max_frags}_{max_slack}_{max_dep},{maxsat_results},{maxsat_part_results},{sat_results}')
-  except Exception as e:
-    print(e)
+def run(outpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
+        run_maxsat_part_auto=False, timeout=180, repeat=5):
+  params = [
+    # (30, 20, 6, 3, 3, 2),
+    (34, 20, 6, 3, 3, 2),
+    (38, 20, 6, 3, 3, 2),
+    (42, 20, 6, 3, 3, 2),
+    (46, 20, 6, 3, 3, 2),
+    (50, 20, 6, 3, 3, 2),
+    (52, 20, 6, 3, 3, 2),
+  ]
+  problems = []
+  maxsat_files = []
+  sat_files = []
+
+  for num_tasks, max_deadline, max_process_time, max_frags, max_slack, max_dep in params:
+    problem = f"{num_tasks}_{max_deadline}_{max_process_time}_{max_frags}_{max_slack}_{max_dep}"
+    problems.append(problem)
+
+    sat, maxsat = generate(num_tasks, max_deadline, max_process_time, max_frags, max_slack, max_dep)
+    
+    sat_filename = path.join(outpath, f"sat_{problem}.als")
+    sat_files.append(sat_filename)
+    with open(sat_filename, "w") as f:
+      f.write(sat)
+
+    maxsat_filename = path.join(outpath, f"maxsat_{problem}.als")
+    maxsat_files.append(maxsat_filename)
+    with open(maxsat_filename, "w") as f:
+      f.write(maxsat)
+  
+  sat_files = sat_files if run_sat else None
+  benchmark(problems, sat_files, maxsat_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
+
+
+def run_models(modelpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
+               run_maxsat_part_auto=False, timeout=180, repeat=5):
+  models = filter(lambda x: x.startswith("maxsat") and x.endswith(".als"), os.listdir(modelpath))
+  problems = []
+  maxsat_files = []
+  sat_files = []
+
+  for m in models:
+    problems.append(m[len("maxsat_"):-len(".als")])
+    maxsat_files.append(path.join(modelpath, m))
+    sat_files.append(path.join(modelpath, m.replace("maxsat", "sat")))
+  
+  sat_files = sat_files if run_sat else None
+  benchmark(problems, sat_files, maxsat_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
 if __name__ == "__main__":
-  print('problem,maxsat_trans,maxsat_total,maxsat_result,maxsat_part_trans,maxsat_part_total,max_part_result,sat_trans,sat_total,#inst')
-  outpath = path.join(os.getcwd(), "mode0_out")
-  if not path.exists(outpath):
+  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model = options()
+
+  if model is None:
+    outpath = path.join(os.getcwd(), "out")
+    if path.exists(outpath):
+      shutil.rmtree(outpath)
     os.mkdir(outpath)
-  mode0(outpath, timeout=600, repeat=1)
+    run(outpath, run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
+  else:
+    run_models(model, run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat)

@@ -9,7 +9,7 @@ import numpy as np
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from util import run_sat, run_maxsat
+from util import benchmark, options
 
 
 def generate(num_courses, num_stu, max_core, max_interests):
@@ -142,112 +142,69 @@ pred validSchedule[courses: Student -> Course] {{
   return sat, maxsat
 
 
-def mode2(outpath, timeout=180):
-  max_core = 3
-  max_interests = 6
-  try:
-    for num_courses in range(10, 20):
-      for num_stu in range(20, 30):
-        sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
-
-        sat_filename = path.join(outpath, f"sat_{num_courses}_{num_stu}_{max_core}_{max_interests}.als")
-        with open(sat_filename, "w") as f:
-          f.write(sat)
-
-        maxsat_filename = path.join(outpath, f"maxsat_{num_courses}_{num_stu}_{max_core}_{max_interests}.als")
-        with open(maxsat_filename, "w") as f:
-          f.write(maxsat)
-        
-        maxsat_results = run_maxsat(maxsat_filename, timeout=timeout)
-        maxsat_part_results = run_maxsat(maxsat_filename, timeout=timeout, partition=True)
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_results},{maxsat_part_results},{sat_results}")
-  except Exception as e:
-    print(e)
-  finally:
-    shutil.rmtree(outpath)
-    pass
-
-
-def mode1(outpath, timeout=180, repeat=5):
+def run(outpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
+        run_maxsat_part_auto=False, timeout=180, repeat=5):
   max_core = 3
   max_interests = 6
   params = [
-    (12, 22),
-    (14, 24),
-    (16, 26),
-    (18, 28)
+    (30, 40),
+    (40, 50),
+    (50, 60),
+    (60, 70),
+    (70, 80),
+    (80, 90),
+    (90, 100)
   ]
-  try:
-    for num_courses, num_stu in params:
-      for i in range(repeat):
-        sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
+  problems = []
+  maxsat_files = []
+  sat_files = []
 
-        sat_filename = path.join(outpath, f"sat_{num_courses}_{num_stu}_{max_core}_{max_interests}_{i}.als")
-        with open(sat_filename, "w") as f:
-          f.write(sat)
+  for num_courses, num_stu in params:
+    problem = f"{num_courses}_{num_stu}_{max_core}_{max_interests}"
+    problems.append(problem)
 
-        maxsat_filename = path.join(outpath, f"maxsat_{num_courses}_{num_stu}_{max_core}_{max_interests}_{i}.als")
-        with open(maxsat_filename, "w") as f:
-          f.write(maxsat)
-        
-        maxsat_results = run_maxsat(maxsat_filename, timeout=timeout)
-        maxsat_part_results = run_maxsat(maxsat_filename, timeout=timeout, partition=True)
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_results},{maxsat_part_results},{sat_results}")
-  except Exception as e:
-    print(e)
+    sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
+
+    sat_filename = path.join(outpath, f"sat_{problem}.als")
+    sat_files.append(sat_filename)
+    with open(sat_filename, "w") as f:
+      f.write(sat)
+
+    maxsat_filename = path.join(outpath, f"maxsat_{problem}.als")
+    maxsat_files.append(maxsat_filename)
+    with open(maxsat_filename, "w") as f:
+      f.write(maxsat)
+  
+  sat_files = sat_files if run_sat else None
+  benchmark(problems, sat_files, maxsat_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
-def mode0(outpath, timeout=180, repeat=5):
-  max_core = 3
-  max_interests = 6
-  params = [
-    (12, 22),
-    (14, 24),
-    (16, 26),
-    (18, 28)
-  ]
-  try:
-    for num_courses, num_stu in params:
-      sat, maxsat = generate(num_courses, num_stu, max_core, max_interests)
+def run_models(modelpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
+               run_maxsat_part_auto=False, timeout=180, repeat=5):
+  models = filter(lambda x: x.startswith("maxsat") and x.endswith(".als"), os.listdir(modelpath))
+  problems = []
+  maxsat_files = []
+  sat_files = []
 
-      sat_filename = path.join(outpath, f"sat_{num_courses}_{num_stu}_{max_core}_{max_interests}.als")
-      with open(sat_filename, "w") as f:
-        f.write(sat)
-
-      maxsat_filename = path.join(outpath, f"maxsat_{num_courses}_{num_stu}_{max_core}_{max_interests}.als")
-      with open(maxsat_filename, "w") as f:
-        f.write(maxsat)
-      
-      for _ in range(repeat):
-        maxsat_results = run_maxsat(maxsat_filename, timeout=timeout)
-        maxsat_part_results = run_maxsat(maxsat_filename, timeout=timeout, partition=True)
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f"{num_courses}_{num_stu}_{max_core}_{max_interests},{maxsat_results},{maxsat_part_results},{sat_results}")
-  except Exception as e:
-    print(e)
+  for m in models:
+    problems.append(m[len("maxsat_"):-len(".als")])
+    maxsat_files.append(path.join(modelpath, m))
+    sat_files.append(path.join(modelpath, m.replace("maxsat", "sat")))
+  
+  sat_files = sat_files if run_sat else None
+  benchmark(problems, sat_files, maxsat_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
-    print("problem,maxsat_trans,maxsat_total,maxsat_result,maxsat_part_trans,maxsat_part_total,maxsat_part_result,sat_trans,sat_total,#inst")
-    if sys.argv[1] == "-m=0":
-      outpath = path.join(os.getcwd(), "mode0_out")
-      if not path.exists(outpath):
-        os.mkdir(outpath)
-      mode0(outpath, timeout=600, repeat=5)
-    elif sys.argv[1] == "-m=1":
-      outpath = path.join(os.getcwd(), "mode1_out")
-      if not path.exists(outpath):
-        os.mkdir(outpath)
-      mode1(outpath)
-    elif sys.argv[1] == "-m=2":
-      outpath = path.join(os.getcwd(), "mode2_out")
-      if not path.exists(outpath):
-        os.mkdir(outpath)
-      mode2(outpath)
-    else:
-      print("Usage: benchmark.py -m=[0|1|2]")
+  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model = options()
+
+  if model is None:
+    outpath = path.join(os.getcwd(), "out")
+    if path.exists(outpath):
+      shutil.rmtree(outpath)
+    os.mkdir(outpath)
+    run(outpath, run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
   else:
-    print("Usage: benchmark.py -m=[0|1|2]")
+    run_models(model, run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat)

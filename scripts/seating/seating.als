@@ -27,10 +27,10 @@ fact {
 
 run {
 	// table-based
-	all t: Table | minsome t.seat.tags
+	all t: Table | softno t.seat.tags
 } for 2 Table
 
 run {
 	// tag-based
-	all t: Tag | minsome seat.tags.t
+	all t: Tag | softno seat.tags.t
 } for 2 Table

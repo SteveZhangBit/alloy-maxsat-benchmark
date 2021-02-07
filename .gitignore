@@ -3,3 +3,4 @@ open-wbo/
 *out/
 __pycache__/
 *.zip
+models*/

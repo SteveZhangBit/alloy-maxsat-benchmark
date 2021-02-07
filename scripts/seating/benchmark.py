@@ -10,7 +10,7 @@ from random import random
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from util import run_sat, run_maxsat
+from util import benchmark, options
 
 def generate(tags, persons, max_tags, num_tables, min_persons, max_persons):
   person_tags = []
@@ -55,176 +55,106 @@ fact {{
 """
   
   sat = als + f"""
-run {{}} for {num_tables} Table, 5 int
+run {{}} for exactly {num_tables} Table, 5 int
 """
 
   table_based = als + f"""
 run {{
   // table-based
   all t: Table | softno t.seat.tags
-}} for {num_tables} Table, 5 int
+}} for exactly {num_tables} Table, 5 int
 """
 
   tag_based = als + f"""
 run {{
 	// tag-based
 	all t: Tag | softno seat.tags.t
-}} for {num_tables} Table, 5 int
+}} for exactly {num_tables} Table, 5 int
 """
   
   return sat, table_based, tag_based
 
 
-def mode2(outpath, timeout=180):
-  try:
-    print("filename,table_maxsat,table_maxsat_part,tag_maxsat,tag_maxsat_part,sat,#inst")
-    for tag in range(5, 10):
-      for p in range(20, 36):
-        min_p = 3
-        max_p = 7
-        
-        if 20 <= p < 24:
-          tab = 5
-        elif 24 <= p < 28:
-          tab = 6
-        elif 28 <= p < 32:
-          tab = 7
-        elif 32 <= p < 36:
-          tab = 8
+def run(outpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
+        run_maxsat_part_auto=False, timeout=180, repeat=5):
+  params = [
+    (7, 28, 6),
+    (7, 30, 6),
+    (8, 30, 7),
+    (8, 32, 7),
+    # (9, 34, 8),
+  ]
+  min_p = 3
+  max_p = 7
 
-        sat, table_based, tag_based = generate(tag, p, tag, tab, min_p, max_p)
-        sat_filename = path.join(outpath, f"sat_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
-        table_filename = path.join(outpath, f"table_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
-        tag_filename = path.join(outpath, f"tag_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
-        with open(sat_filename, "w") as f:
-          f.write(sat)
-        with open(table_filename, "w") as f:
-          f.write(table_based)
-        with open(tag_filename, "w") as f:
-          f.write(tag_based)
-        
-        table_results = run_maxsat(table_filename, timeout=timeout)
-        table_part_results = run_maxsat(table_filename, timeout=timeout, partition=True)
+  problems = []
+  table_files = []
+  tag_files = []
+  sat_files = []
 
-        tag_results = run_maxsat(tag_filename, timeout=timeout)
-        tag_part_results = run_maxsat(tag_filename, timeout=timeout, partition=True)
+  for tag, p, tab in params:
+    problem = f"{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}"
+    problems.append(problem)
 
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f"{tag}_{p}_{tag}_{tab}_{min_p}_{max_p},{table_results},{table_part_results},{tag_results},{tag_part_results},{sat_results}")
-  except Exception as e:
-    print(e)
-  finally:
-    shutil.rmtree(outpath)
-    pass
+    sat, table_based, tag_based = generate(tag, p, tag, tab, min_p, max_p)
 
+    sat_filename = path.join(outpath, f"sat_{problem}.als")
+    sat_files.append(sat_filename)
+    with open(sat_filename, "w") as f:
+      f.write(sat)
 
-def mode1(outpath, timeout=180, repeat=5):
-  try:
-    print("filename,table_maxsat,table_maxsat_part,tag_maxsat,tag_maxsat_part,sat,#inst")
-    params = [
-      (5, 20),
-      (6, 24),
-      (7, 28),
-      (8, 32),
-      (9, 36)
-    ]
-    for tag, p in params:
-      for i in range(repeat):
-        min_p = 3
-        max_p = 7
-        
-        if 20 <= p < 24:
-          tab = 5
-        elif 24 <= p < 28:
-          tab = 6
-        elif 28 <= p < 32:
-          tab = 7
-        else:
-          tab = 8
-
-        sat, table_based, tag_based = generate(tag, p, tag, tab, min_p, max_p)
-        sat_filename = path.join(outpath, f"sat_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}_{i}.als")
-        table_filename = path.join(outpath, f"table_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}_{i}.als")
-        tag_filename = path.join(outpath, f"tag_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}_{i}.als")
-        with open(sat_filename, "w") as f:
-          f.write(sat)
-        with open(table_filename, "w") as f:
-          f.write(table_based)
-        with open(tag_filename, "w") as f:
-          f.write(tag_based)
-        
-        table_results = run_maxsat(table_filename, timeout=timeout)
-        table_part_results = run_maxsat(table_filename, timeout=timeout, partition=True)
-
-        tag_results = run_maxsat(tag_filename, timeout=timeout)
-        tag_part_results = run_maxsat(tag_filename, timeout=timeout, partition=True)
-
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f"{tag}_{p}_{tag}_{tab}_{min_p}_{max_p},{table_results},{table_part_results},{tag_results},{tag_part_results},{sat_results}")
-  except Exception as e:
-    print(e)
+    table_filename = path.join(outpath, f"table_{problem}.als")
+    table_files.append(table_filename)
+    with open(table_filename, "w") as f:
+      f.write(table_based)
+    
+    tag_filename = path.join(outpath, f"tag_{problem}.als")
+    tag_files.append(tag_filename)
+    with open(tag_filename, "w") as f:
+      f.write(tag_based)
+  
+  if run_sat:
+    benchmark(problems, sat_files, timeout=timeout, repeat=repeat)
+  print("====================\nTable-based\n====================")
+  benchmark(problems, None, table_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
+  print("====================\nTag-based\n====================")
+  benchmark(problems, None, tag_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
-def mode0(outpath, timeout=180, repeat=5):
-  try:
-    params = [
-      (7, 28, 6),
-      (7, 30, 6),
-      (8, 30, 7),
-      (8, 32, 7),
-      (9, 34, 8),
-    ]
-    min_p = 3
-    max_p = 7
-    for tag, p, tab in params:
-      sat, table_based, tag_based = generate(tag, p, tag, tab, min_p, max_p)
-      sat_filename = path.join(outpath, f"sat_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
-      table_filename = path.join(outpath, f"table_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
-      tag_filename = path.join(outpath, f"tag_{tag}_{p}_{tag}_{tab}_{min_p}_{max_p}.als")
-      with open(sat_filename, "w") as f:
-        f.write(sat)
-      with open(table_filename, "w") as f:
-        f.write(table_based)
-      with open(tag_filename, "w") as f:
-        f.write(tag_based)
-      
-      for _ in range(repeat):
-        table_results = run_maxsat(table_filename, timeout=timeout)
-        table_part_results = run_maxsat(table_filename, timeout=timeout, partition=True)
+def run_models(modelpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
+               run_maxsat_part_auto=False, timeout=180, repeat=5):
+  models = filter(lambda x: x.startswith("sat") and x.endswith(".als"), os.listdir(modelpath))
+  problems = []
+  table_files = []
+  tag_files = []
+  sat_files = []
 
-        tag_results = run_maxsat(tag_filename, timeout=timeout)
-        tag_part_results = run_maxsat(tag_filename, timeout=timeout, partition=True)
-
-        sat_results = run_sat(sat_filename, timeout=timeout)
-        print(f"{tag}_{p}_{tag}_{tab}_{min_p}_{max_p},{table_results},{table_part_results},{tag_results},{tag_part_results},{sat_results}")
-  except Exception as e:
-    print(e)
+  for m in models:
+    problems.append(m[len("sat_"):-len(".als")])
+    sat_files.append(path.join(modelpath, m))
+    table_files.append(path.join(modelpath, m.replace("sat", "table")))
+    tag_files.append(path.join(modelpath, m.replace("sat", "tag")))
+  
+  if run_sat:
+    benchmark(problems, sat_files, timeout=timeout, repeat=repeat)
+  print("====================\nTable-based\n====================")
+  benchmark(problems, None, table_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
+  print("====================\nTag-based\n====================")
+  benchmark(problems, None, tag_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
-    print(
-      "problem,table_trans,table_total,table_result," +
-      "table_part_trans,table_part_total,table_part_result," +
-      "tag_trans,tag_total,table_result," +
-      "tag_part_trans,tag_part_total,table_part_result," +
-      "sat_trans,sat_total,#inst")
-    if sys.argv[1] == "-m=0":
-      outpath = path.join(os.getcwd(), "mode0_out")
-      if not path.exists(outpath):
-        os.mkdir(outpath)
-      mode0(outpath, timeout=600, repeat=5)
-    elif sys.argv[1] == "-m=1":
-      outpath = path.join(os.getcwd(), "mode1_out")
-      if not path.exists(outpath):
-        os.mkdir(outpath)
-      mode1(outpath)
-    elif sys.argv[1] == "-m=2":
-      outpath = path.join(os.getcwd(), "mode2_out")
-      if not path.exists(outpath):
-        os.mkdir(outpath)
-      mode2(outpath)
-    else:
-      print("Usage: benchmark.py -m=[0|1|2]")
+  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model = options()
+
+  if model is None:
+    outpath = path.join(os.getcwd(), "out")
+    if path.exists(outpath):
+      shutil.rmtree(outpath)
+    os.mkdir(outpath)
+    run(outpath, run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
   else:
-    print("Usage: benchmark.py -m=[0|1|2]")
+    run_models(model, run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
