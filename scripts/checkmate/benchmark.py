@@ -7,16 +7,16 @@ import sys
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from util import run_sat, run_maxsat
+from util import benchmark, options
 
 
 if __name__ == "__main__":
-  print("problem,maxsat_trans,maxsat_total,maxsat_result,maxsat_part_trans,maxsat_part_total,maxsat_part_result,sat_trans,sat_total,#inst")
-  timeout = 30 * 60
-  repeat = 5
-  for name in ["flush_reload", "meltdown", "spectre"]:
-    for _ in range(repeat):
-      maxsat_results = run_maxsat(name + "_maxsat.als", timeout=timeout)
-      maxsat_part_results = run_maxsat(name + "_maxsat.als", timeout=timeout, partition=True)
-      sat_results = run_sat(name + ".als", timeout=timeout)
-      print(f"{name},{maxsat_results},{maxsat_part_results},{sat_results}")
+  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model = options()
+
+  problems = ["flush_reload", "meltdown", "spectre"]
+  sat_files = list(map(lambda x: x + ".als", problems))
+  maxsat_files = list(map(lambda x: x + "_maxsat.als", problems))
+
+  sat_files = sat_files if run_sat else None
+  benchmark(problems, sat_files, maxsat_files, run_maxsat_one, run_maxsat_all,
+            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)

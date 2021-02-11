@@ -67,7 +67,7 @@ def run_maxsat(maxsat, timeout=60, partition=False, auto=False):
   if partition:
     cmd.append("-p")
   if auto:
-    raise Exception("This function is not implemented yet")
+    cmd.append("-auto")
 
   trans_time = "N/A"
   solve_time = "N/A"
