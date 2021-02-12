@@ -4,6 +4,7 @@ from os import path
 import shutil
 import signal
 import sys
+import time
 
 
 def run_sat(sat, timeout=60):
@@ -103,7 +104,58 @@ def run_maxsat(maxsat, timeout=60, partition=False, auto=False):
 
 
 def run_maxsat_all(maxsat, timeout=60):
-  raise Exception("This function is not implemented")
+  cmd = [
+    "java",
+    "-Xms8192k",
+    "-Xmx8192m",
+    "-Djava.library.path=../../lib/open-wbo",
+    "-cp",
+    "../../bin/org.alloytools.alloy.dist.jar",
+    "edu.mit.csail.sdg.alloy4whole.BenchmarkMain",
+    "-maxsat=" + maxsat,
+    "-all-opt"
+  ]
+
+  cnf = None
+  trans_time = "N/A"
+  solve_time = "N/A"
+  num_inst = "N/A"
+  out = subprocess.check_output(cmd, text=True)
+  for line in out.strip().split("\n"):
+    if line.startswith("Translation time: "):
+      trans_time = int(line[len("Translation time: "):])
+    elif line.startswith("CNF File: "):
+      cnf = line[len("CNF File: "):]
+  
+  if cnf is not None:
+    openwbo = [
+      "../../lib/open-wbo/open-wbo",
+      "-formula=0",
+      "-algorithm=2",
+      "-all-opt",
+      cnf
+    ]
+
+    start_time = time.time()
+    with subprocess.Popen(openwbo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, preexec_fn=os.setsid) as proc:
+      try:
+        out = proc.communicate(timeout=timeout)[0]
+        solve_time = round((time.time() - start_time) * 1000)
+        for line in out.strip().split("\n"):
+          if line.startswith("c Optimal Solutions: "):
+            num_inst = line[len("c Optimal Solutions: "):]
+            break
+      except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGINT)
+        out = proc.communicate()[0]
+      except KeyboardInterrupt as e:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.communicate()
+        cleantmp()
+        raise e
+
+  cleantmp()
+  return f"{trans_time},{solve_time},{num_inst}"
 
 
 def benchmark(problems, sat_files=None, maxsat_files=None, maxsat_one=False, maxsat_all=False,
@@ -128,8 +180,10 @@ def benchmark(problems, sat_files=None, maxsat_files=None, maxsat_one=False, max
       if maxsat_files is not None:
         if maxsat_one:
           results += "," + run_maxsat(maxsat_files[i], timeout=timeout)
-        if maxsat_all:
-          results += "," + run_maxsat_all(maxsat_files[i], timeout=timeout)
+        if maxsat_all and not skip_maxsat_all:
+          all_opt = run_maxsat_all(maxsat_files[i], timeout=timeout)
+          results += "," + all_opt
+          skip_maxsat_all = "N/A" in all_opt
         if maxsat_part:
           results += "," + run_maxsat(maxsat_files[i], timeout=timeout, partition=True)
         if maxsat_part_auto:
