@@ -45,37 +45,41 @@ abstract sig Component {
 sig Compromised in Component {}
 
 // Network devices
-abstract sig Firewall extends Component {}
+abstract sig NetworkDevice extends Component {}
+
+abstract sig Firewall extends NetworkDevice {}
 one sig DMZFirewall extends Firewall {}
 sig BackupFirewall extends Firewall {}
 
-abstract sig Switch extends Component {}
+abstract sig Switch extends NetworkDevice {}
 one sig Switch1 extends Switch {}
 one sig Switch2 extends Switch {}
 sig BackupSwitch extends Switch {}
 
 // Functional devices
-abstract sig Printer extends Component {}
+abstract sig FunctionDevice extends Component {}
+
+abstract sig Printer extends FunctionDevice {}
 one sig Printer1 extends Printer {}
 sig BackupPrinter extends Printer {}
 
-abstract sig VPN extends Component {}
+abstract sig VPN extends FunctionDevice {}
 one sig VPN1 extends VPN {}
 sig BackupVPN extends VPN {}
 
-abstract sig SCADA extends Component {}
+abstract sig SCADA extends FunctionDevice {}
 one sig SCADA1 extends SCADA {}
 sig BackupSCADA extends SCADA {}
 
-abstract sig OPC extends Component {}
+abstract sig OPC extends FunctionDevice {}
 one sig OPC1 extends OPC {}
 sig BackupOPC extends OPC {}
 
-abstract sig HMI extends Component {}
+abstract sig HMI extends FunctionDevice {}
 one sig HMI1 extends HMI {}
 sig BackupHMI extends HMI {}
 
-abstract sig EngWorkstation extends Component {}
+abstract sig EngWorkstation extends FunctionDevice {}
 one sig EngWorkstation1 extends EngWorkstation {}
 sig BackupEngWorkstation extends EngWorkstation {}
 
@@ -94,8 +98,7 @@ pred noSelfLoop[conn: Component -> Component] {
 
 // Functional components (e.g., printers, SCADA) should be connected through swithers.
 pred archStyle[conn: Component -> Component] {
-  let FuncComps = Printer + VPN + SCADA + OPC + HMI + EngWorkstation |
-    all c: FuncComps | lone c.conn and shouldConnectTo[c, Switch, conn]
+  all c: FunctionDevice | lone c.conn and shouldConnectTo[c, NetworkDevice, conn]
 }
 
 pred validArch[conn: Component -> Component] {
