@@ -7,7 +7,10 @@ import sys
 import time
 
 
-def run_sat(sat, timeout=60):
+def run_sat(sat, timeout=60, from_file=False):
+  if from_file:
+    raise Exception("'from_file' option is not implemented yet.")
+
   cmd = [
     "java",
     "-Xms8192k",
@@ -53,8 +56,11 @@ def run_sat(sat, timeout=60):
   return f"{trans_time},{solve_time},{num_inst}"
 
 
-def run_maxsat(maxsat, timeout=60, partition=False, auto=False):
+def run_maxsat(maxsat, timeout=60, partition=False, auto=False, from_file=False):
   assert(not auto or partition)
+  if from_file:
+    return run_maxsat_from_file(maxsat, timeout, partition, auto)
+
   cmd = [
     "java",
     "-Xms8192k",
@@ -103,7 +109,82 @@ def run_maxsat(maxsat, timeout=60, partition=False, auto=False):
   return f"{trans_time},{solve_time},{sat}"
 
 
-def run_maxsat_all(maxsat, timeout=60):
+def run_maxsat_from_file(maxsat, timeout=60, partition=False, auto=False):
+  cmd = [
+    "java",
+    "-Xms8192k",
+    "-Xmx8192m",
+    "-Djava.library.path=../../lib/open-wbo",
+    "-cp",
+    "../../bin/org.alloytools.alloy.dist.jar",
+    "edu.mit.csail.sdg.alloy4whole.BenchmarkMain",
+    "-maxsat=" + maxsat,
+    "-file-only"
+  ]
+  if partition:
+    cmd.append("-p")
+  if auto:
+    cmd.append("-auto")
+
+  cnf = None
+  trans_time = "N/A"
+  solve_time = "N/A"
+  sat = "N/A"
+  out = subprocess.check_output(cmd, text=True)
+  for line in out.strip().split("\n"):
+    if line.startswith("Translation time: "):
+      trans_time = int(line[len("Translation time: "):])
+    elif line.startswith("CNF File: "):
+      cnf = line[len("CNF File: "):]
+  
+  if cnf is not None:
+    if partition:
+      if auto:
+        openwbo = [
+          "../../lib/open-wbo/open-wbo",
+          "-formula=0",
+          "-algorithm=3",
+          cnf
+        ]
+      else:
+        openwbo = [
+          "../../lib/open-wbo/open-wbo",
+          "-formula=2",
+          "-algorithm=4",
+          cnf
+        ]
+    else:
+      openwbo = [
+        "../../lib/open-wbo/open-wbo",
+        # "-formula=0",
+        # "-algorithm=2",
+        cnf
+      ]
+
+    start_time = time.time()
+    with subprocess.Popen(openwbo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, preexec_fn=os.setsid) as proc:
+      try:
+        out = proc.communicate(timeout=timeout)[0]
+        solve_time = round((time.time() - start_time) * 1000)
+        for line in out.strip().split("\n"):
+          if line.startswith("s OPTIMUM FOUND"):
+            sat = "SAT"
+          elif line.startswith("s UNSATISFIABLE"):
+            sat = "UNSAT"
+      except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGINT)
+        out = proc.communicate()[0]
+      except KeyboardInterrupt as e:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.communicate()
+        cleantmp()
+        raise e
+
+  cleantmp()
+  return f"{trans_time},{solve_time},{sat}"
+
+
+def run_maxsat_all(maxsat, timeout=60, from_file=False):
   cmd = [
     "java",
     "-Xms8192k",
@@ -159,7 +240,7 @@ def run_maxsat_all(maxsat, timeout=60):
 
 
 def benchmark(problems, sat_files=None, maxsat_files=None, maxsat_one=False, maxsat_all=False,
-              maxsat_part=False, maxsat_part_auto=False, timeout=180, repeat=5):
+              maxsat_part=False, maxsat_part_auto=False, timeout=180, repeat=5, from_file=False):
   header = "problem"
   if maxsat_files is not None:
     if maxsat_one:
@@ -179,15 +260,15 @@ def benchmark(problems, sat_files=None, maxsat_files=None, maxsat_one=False, max
       results = problems[i]
       if maxsat_files is not None:
         if maxsat_one:
-          results += "," + run_maxsat(maxsat_files[i], timeout=timeout)
+          results += "," + run_maxsat(maxsat_files[i], timeout=timeout, from_file=from_file)
         if maxsat_all:
-          results += "," + run_maxsat_all(maxsat_files[i], timeout=timeout)
+          results += "," + run_maxsat_all(maxsat_files[i], timeout=timeout, from_file=from_file)
         if maxsat_part:
-          results += "," + run_maxsat(maxsat_files[i], timeout=timeout, partition=True)
+          results += "," + run_maxsat(maxsat_files[i], timeout=timeout, partition=True, from_file=from_file)
         if maxsat_part_auto:
-          results += "," + run_maxsat(maxsat_files[i], timeout=timeout, partition=True, auto=True)
+          results += "," + run_maxsat(maxsat_files[i], timeout=timeout, partition=True, auto=True, from_file=from_file)
       if sat_files is not None:
-        results += "," + run_sat(sat_files[i], timeout=timeout)
+        results += "," + run_sat(sat_files[i], timeout=timeout, from_file=from_file)
       print(results)
 
 
@@ -200,6 +281,7 @@ def options():
   timeout = 180
   repeat = 5
   model = None
+  from_file = False
 
   if len(sys.argv) < 2:
     print("Usage: benchmark.py")
@@ -211,6 +293,7 @@ def options():
     print("\t-t=<timeout>")
     print("\t-r=<repeat>")
     print("\t-m=<model path>")
+    print("\t-from_file\t\tGenerate the CNF/WCNF file and then call the solver")
     exit(0)
   else:
     for arg in sys.argv[1:]:
@@ -224,6 +307,8 @@ def options():
         run_maxsat_part = True
       elif arg == "-maxsat_part_auto":
         run_maxsat_part_auto = True
+      elif arg == "-from_file":
+        from_file = True
       elif arg.startswith("-t="):
         timeout = int(arg[len("-t="):])
       elif arg.startswith("-r="):
@@ -231,7 +316,7 @@ def options():
       elif arg.startswith("-m="):
         model = arg[len("-m="):]
   
-  return run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model
+  return run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model, from_file
 
 
 def cleantmp():

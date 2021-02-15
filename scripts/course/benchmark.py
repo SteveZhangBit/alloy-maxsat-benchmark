@@ -198,7 +198,7 @@ def run_models(modelpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=Fa
 
 
 if __name__ == "__main__":
-  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model = options()
+  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model, from_file = options()
 
   if model is None:
     outpath = path.join(os.getcwd(), "out")

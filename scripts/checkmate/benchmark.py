@@ -11,7 +11,7 @@ from util import benchmark, options
 
 
 if __name__ == "__main__":
-  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model = options()
+  run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model, from_file = options()
 
   problems = ["flush_reload", "meltdown", "spectre"]
   sat_files = list(map(lambda x: x + ".als", problems))
