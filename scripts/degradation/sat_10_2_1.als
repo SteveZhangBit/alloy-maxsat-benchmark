@@ -98,7 +98,7 @@ pred noSelfLoop[conn: Component -> Component] {
 
 // Functional components (e.g., printers, SCADA) should be connected through swithers.
 pred archStyle[conn: Component -> Component] {
-  all c: FunctionDevice | lone c.conn and shouldConnectTo[c, NetworkDevice, conn]
+  all c: FunctionDevice | lone c.conn and shouldConnectTo[c, Switch, conn]
 }
 
 pred validArch[conn: Component -> Component] {
@@ -110,7 +110,7 @@ pred validArch[conn: Component -> Component] {
 // Initial architecture
 fact {
   initConn =
-    OPC1 -> Switch1 + Switch1 -> OPC +
+    OPC1 -> Switch1 + Switch1 -> OPC1 +
     HMI1 -> Switch1 + Switch1 -> HMI1 +
     SCADA1 -> Switch1 + Switch1 -> SCADA1 +
     EngWorkstation1 -> Switch1 + Switch1 -> EngWorkstation1 +
@@ -208,20 +208,10 @@ fact {
     all c: Component | c in Printer1.k_transitive iff c in Compromised
 }
 
-sig AvailFunction in Function {}
-
-soft[1] fact {
-  TransFunc in AvailFunction
-  PrintFunc in AvailFunction
-}
-
-run GracefulDegrade {
+run AnyArch {
   validArch[degradedConn]
-  TransFunc in AvailFunction implies transFunc[degradedConn]
-  PrintFunc in AvailFunction implies printFunc[degradedConn]
-  maxsome degradedConn & initConn
-  // In addition to maximize the common parts, we also want to minimize the new connections.
-  softno degradedConn - initConn
+  transFunc[degradedConn]
+  printFunc[degradedConn]
 } for 1 BackupPrinter, 0 BackupVPN, 0 BackupFirewall, 0 BackupSwitch,	
       0 BackupOPC, 0 BackupHMI, 0 BackupSCADA, 0 BackupEngWorkstation
 

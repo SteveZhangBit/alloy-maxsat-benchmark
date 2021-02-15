@@ -5,3 +5,5 @@ open-wbo-bck/
 __pycache__/
 *.zip
 models*/
+*.log
+*cnf

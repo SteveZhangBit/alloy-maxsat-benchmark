@@ -48,12 +48,14 @@ sig Compromised in Component {}
 abstract sig NetworkDevice extends Component {}
 
 abstract sig Firewall extends NetworkDevice {}
-one sig DMZFirewall extends Firewall {}
+one sig DMZFirewall1 extends Firewall {}
+one sig DMZFirewall2 extends Firewall {}
 sig BackupFirewall extends Firewall {}
 
 abstract sig Switch extends NetworkDevice {}
 one sig Switch1 extends Switch {}
 one sig Switch2 extends Switch {}
+one sig Switch4 extends Switch {}
 sig BackupSwitch extends Switch {}
 
 // Functional devices
@@ -63,9 +65,9 @@ abstract sig Printer extends FunctionDevice {}
 one sig Printer1 extends Printer {}
 sig BackupPrinter extends Printer {}
 
-abstract sig VPN extends FunctionDevice {}
-one sig VPN1 extends VPN {}
-sig BackupVPN extends VPN {}
+one sig VPN extends FunctionDevice {}
+
+one sig Internet extends FunctionDevice {}
 
 abstract sig SCADA extends FunctionDevice {}
 one sig SCADA1 extends SCADA {}
@@ -83,6 +85,24 @@ abstract sig EngWorkstation extends FunctionDevice {}
 one sig EngWorkstation1 extends EngWorkstation {}
 sig BackupEngWorkstation extends EngWorkstation {}
 
+abstract sig Historian extends FunctionDevice {}
+one sig Historian1 extends Historian {}
+sig BackupHistorian extends Historian {}
+
+abstract sig NTP extends FunctionDevice {}
+one sig NTP1 extends NTP {}
+sig BackupNTP extends NTP {}
+
+abstract sig RTU extends FunctionDevice {}
+one sig RTU1 extends RTU {}
+one sig RTU2 extends RTU {}
+sig BackupRTU extends RTU {}
+
+abstract sig Relay extends FunctionDevice {}
+one sig Relay1 extends Relay {}
+one sig Relay2 extends Relay {}
+sig BackupRelay extends Relay {}
+
 /*************************************
  * Architecture constraints
  ************************************/
@@ -98,7 +118,7 @@ pred noSelfLoop[conn: Component -> Component] {
 
 // Functional components (e.g., printers, SCADA) should be connected through swithers.
 pred archStyle[conn: Component -> Component] {
-  all c: FunctionDevice | lone c.conn and shouldConnectTo[c, NetworkDevice, conn]
+  all c: FunctionDevice | lone c.conn and shouldConnectTo[c, Switch, conn]
 }
 
 pred validArch[conn: Component -> Component] {
@@ -110,14 +130,26 @@ pred validArch[conn: Component -> Component] {
 // Initial architecture
 fact {
   initConn =
-    OPC1 -> Switch1 + Switch1 -> OPC +
+    OPC1 -> Switch1 + Switch1 -> OPC1 +
     HMI1 -> Switch1 + Switch1 -> HMI1 +
     SCADA1 -> Switch1 + Switch1 -> SCADA1 +
     EngWorkstation1 -> Switch1 + Switch1 -> EngWorkstation1 +
-    Switch1 -> DMZFirewall + DMZFirewall -> Switch1 +
-    DMZFirewall -> Switch2 + Switch2 -> DMZFirewall +
+    NTP1 -> Switch1 + Switch1 -> NTP1 +
+    Historian1 -> Switch1 + Switch1 -> Historian1 +
+
+    Switch1 -> DMZFirewall1 + DMZFirewall1 -> Switch1 +
+    DMZFirewall1 -> Switch2 + Switch2 -> DMZFirewall1 +
+
     Switch2 -> Printer1 + Printer1 -> Switch2 +
-    Switch2 -> VPN1 + VPN1 -> Switch2
+    Switch2 -> VPN + VPN -> Switch2 +
+    Switch2 -> Internet + Internet -> Switch2 +
+
+    Switch1 -> DMZFirewall2 + DMZFirewall2 -> Switch1 +
+    DMZFirewall2 -> Switch4 + Switch4 -> DMZFirewall2 +
+    RTU1 -> Switch4 + Switch4 -> RTU1 +
+    RTU2 -> Switch4 + Switch4 -> RTU2 +
+    Relay1 -> Switch4 + Switch4 -> Relay1 +
+    Relay2 -> Switch4 + Switch4 -> Relay2
   validArch[initConn]
 }
 
@@ -129,6 +161,9 @@ abstract sig Data {}
 one sig ActionsRest extends Data {}
 one sig StatusRest extends Data {}
 one sig SetPointsRest extends Data {}
+one sig StatusModbus extends Data {}
+one sig ActionsModbus extends Data {}
+one sig Time extends Data {}
 
 fact {
   // If a component consumes no data, then it has no consume paths
@@ -156,16 +191,20 @@ fact {
   no VPN.produce
   no VPN.dataflow
 
+  no Internet.consume
+  no Internet.produce
+  no Internet.dataflow
+
   all c: SCADA {
     c.consume = ActionsRest + StatusRest + SetPointsRest
     c.produce = ActionsRest
-    c.dataflow = HMI + EngWorkstation + OPC
+    c.dataflow = HMI + EngWorkstation + OPC + Historian
   }
 
   all c: OPC {
-    c.consume = ActionsRest
-    c.produce = StatusRest
-    c.dataflow = SCADA + HMI
+    c.consume = ActionsRest + StatusModbus
+    c.produce = StatusRest + ActionsModbus
+    c.dataflow = SCADA + HMI + Relay
   }
 
   all c: HMI {
@@ -179,6 +218,26 @@ fact {
     c.produce = SetPointsRest
     c.dataflow = SCADA
   }
+
+  all c: Historian | c.consume = Time + StatusRest + ActionsRest + SetPointsRest
+  no Historian.produce
+  no Historian.dataflow
+
+  no NTP.consume
+  all c: NTP {
+    c.produce = Time
+    c.dataflow = Historian
+  }
+
+  no RTU.consume
+  all c: RTU {
+    c.produce = StatusModbus
+    c.dataflow = OPC
+  }
+
+  all c: Relay | c.consume = ActionsModbus
+  no Relay.produce
+  no Relay.dataflow
 }
 
 /*************************************
@@ -187,15 +246,22 @@ fact {
 abstract sig Function {}
 one sig TransFunc extends Function {}
 one sig PrintFunc extends Function {}
+one sig HistoryFunc extends Function {}
 
 pred transFunc[conn: Component -> Component] {
   some c: OPC | dataSatisfied[c, conn]
   some c: HMI | dataSatisfied[c, conn]
   some c: SCADA | dataSatisfied[c, conn]
+  some c: RTU | dataSatisfied[c, conn]
+  some c: Relay | dataSatisfied[c, conn]
 }
 
 pred printFunc[conn: Component -> Component] {
   some c: Printer | dataSatisfied[c, conn]
+}
+
+pred historyFunc[conn: Component -> Component] {
+  some c: Historian | dataSatisfied[c, conn]
 }
 
 /*************************************
@@ -203,17 +269,30 @@ pred printFunc[conn: Component -> Component] {
  ************************************/
 fact {
   Printer1 in Compromised
+  RTU1 in Compromised
   // Can go k=2 steps
   let k_transitive = initConn + initConn.initConn |
-    all c: Component | c in Printer1.k_transitive iff c in Compromised
+    all c: Component | (c in Printer1.k_transitive or c in RTU1.k_transitive) iff c in Compromised
 }
 
-run AnyArch {
+sig AvailFunction in Function {}
+
+soft[1] fact {
+  TransFunc in AvailFunction
+  PrintFunc in AvailFunction
+  HistoryFunc in AvailFunction
+}
+
+run GracefulDegrade {
   validArch[degradedConn]
-  transFunc[degradedConn]
-  printFunc[degradedConn]
-} for 1 BackupPrinter, 0 BackupVPN, 0 BackupFirewall, 0 BackupSwitch,	
-      0 BackupOPC, 0 BackupHMI, 0 BackupSCADA, 0 BackupEngWorkstation
+  
+  TransFunc in AvailFunction implies transFunc[degradedConn]
+  PrintFunc in AvailFunction implies printFunc[degradedConn]
+  HistoryFunc in AvailFunction implies historyFunc[degradedConn]
+
+  maxsome degradedConn & initConn
+  softno degradedConn - initConn
+} for 26 Component
 
 /*************************************
  * Helper functions

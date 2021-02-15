@@ -180,10 +180,8 @@ def benchmark(problems, sat_files=None, maxsat_files=None, maxsat_one=False, max
       if maxsat_files is not None:
         if maxsat_one:
           results += "," + run_maxsat(maxsat_files[i], timeout=timeout)
-        if maxsat_all and not skip_maxsat_all:
-          all_opt = run_maxsat_all(maxsat_files[i], timeout=timeout)
-          results += "," + all_opt
-          skip_maxsat_all = "N/A" in all_opt
+        if maxsat_all:
+          results += "," + run_maxsat_all(maxsat_files[i], timeout=timeout)
         if maxsat_part:
           results += "," + run_maxsat(maxsat_files[i], timeout=timeout, partition=True)
         if maxsat_part_auto:
