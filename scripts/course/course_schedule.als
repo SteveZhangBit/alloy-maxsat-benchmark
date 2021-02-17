@@ -67,4 +67,5 @@ pred validSchedule[courses: Student -> Course] {
 // Case 1
 run AnySchedule {
   validSchedule[courses]
+  all stu: Student | some stu.interests & stu.courses
 }

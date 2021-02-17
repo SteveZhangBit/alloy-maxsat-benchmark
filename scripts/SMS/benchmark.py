@@ -137,6 +137,7 @@ run {{
   SingleFrag
   TaskDep
   Deadline
+  some Completed
 }} for {int_size} Int
 """
   maxsat = als + f"""

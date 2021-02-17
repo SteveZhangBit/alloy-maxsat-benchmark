@@ -137,7 +137,7 @@ pred validSchedule[courses: Student -> Course] {{
 
 """
 
-  sat = als + "run AnySchedule { validSchedule[courses] }"
+  sat = als + "run AnySchedule {\n  validSchedule[courses]\n  all stu: Student | some stu.interests & stu.courses\n}"
   maxsat = als + "run MaxInterests1 {\n  validSchedule[courses]\n  all stu: Student | maxsome stu.interests & stu.courses\n}"
   return sat, maxsat
 

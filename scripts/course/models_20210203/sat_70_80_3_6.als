@@ -447,4 +447,7 @@ pred validSchedule[courses: Student -> Course] {
   }
 }
 
-run AnySchedule { validSchedule[courses] }
+run AnySchedule {
+  validSchedule[courses]
+  all stu: Student | some stu.interests & stu.courses
+}

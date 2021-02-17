@@ -218,4 +218,5 @@ run {
   SingleFrag
   TaskDep
   Deadline
+  some Completed
 } for 7 Int
