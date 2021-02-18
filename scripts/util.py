@@ -229,6 +229,10 @@ def run_maxsat_all(maxsat, timeout=60, from_file=False):
       except subprocess.TimeoutExpired:
         os.killpg(proc.pid, signal.SIGINT)
         out = proc.communicate()[0]
+        for line in out.strip().split("\n"):
+          if line.startswith("c Optimal Solutions: "):
+            num_inst = line[len("c Optimal Solutions: "):]
+            break
       except KeyboardInterrupt as e:
         os.killpg(proc.pid, signal.SIGKILL)
         proc.communicate()
