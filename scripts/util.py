@@ -323,6 +323,81 @@ def options():
   return run_sat, run_maxsat_one, run_maxsat_all, run_maxsat_part, run_maxsat_part_auto, timeout, repeat, model, from_file
 
 
+def alloy_star_options():
+  timeout = 180
+  repeat = 5
+  model = None
+
+  if len(sys.argv) < 2:
+    print("Usage: benchmark.py")
+    print("\t-t=<timeout>")
+    print("\t-r=<repeat>")
+    print("\t-m=<model path>")
+    exit(0)
+  else:
+    for arg in sys.argv[1:]:
+      if arg.startswith("-t="):
+        timeout = int(arg[len("-t="):])
+      elif arg.startswith("-r="):
+        repeat = int(arg[len("-r="):])
+      elif arg.startswith("-m="):
+        model = arg[len("-m="):]
+  
+  return timeout, repeat, model
+
+
+def benchmark_alloy_star(problems, sat_files, timeout=180, repeat=5):
+  print("problem,trans,solve,result")
+  for i in range(len(problems)):
+    for _ in range(repeat):
+      results = problems[i] + "," + run_alloy_star(sat_files[i], timeout)
+      print(results)
+
+
+def run_alloy_star(sat_file, timeout=60):
+  cmd = [
+    "java",
+    "-Xms8192k",
+    "-Xmx8192m",
+    "-Djava.library.path=../../lib",
+    "-jar",
+    "../../bin/hola-cli.jar",
+    sat_file
+  ]
+
+  trans_time = "N/A"
+  solve_time = "N/A"
+  sat = "N/A"
+  with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, preexec_fn=os.setsid) as proc:
+    try:
+      out = proc.communicate(timeout=timeout)[0]
+      total_time = 0
+      for line in out.strip().split("\n"):
+        if line.startswith("Translation time: "):
+          trans_time = int(line[len("Translation time: "):])
+        elif line.startswith("Total time: "):
+          total_time = int(line[len("Total time: "):])
+        elif line.startswith("Solved: "):
+          sat = line[len("Solved: "):]
+      if total_time > 0:
+        solve_time = total_time - trans_time
+    except subprocess.TimeoutExpired:
+      os.killpg(proc.pid, signal.SIGINT)
+      out = proc.communicate()[0]
+      for line in out.strip().split("\n"):
+        if line.startswith("Translation time: "):
+          trans_time = line[len("Translation time: "):]
+          break
+    except KeyboardInterrupt as e:
+      os.killpg(proc.pid, signal.SIGKILL)
+      proc.communicate()
+      cleantmp()
+      raise e
+  
+  cleantmp()
+  return f"{trans_time},{solve_time},{sat}"
+
+
 def cleantmp():
   # FIXME: this is wrong when the user open two benchmarks at the same time, this will
   # delete the tmp files generated for the other benchmark
