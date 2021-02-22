@@ -405,3 +405,31 @@ def cleantmp():
   for t in tmps:
     t = path.join("/tmp", t)
     os.remove(t)
+
+
+def collect_stat(problems, files):
+  print("problem,#vars,#clauses")
+  for i in range(len(problems)):
+    cmd = [
+      "java",
+      "-Xms8192k",
+      "-Xmx8192m",
+      "-Djava.library.path=../../lib/open-wbo",
+      "-cp",
+      "../../bin/org.alloytools.alloy.dist.jar",
+      "edu.mit.csail.sdg.alloy4whole.BenchmarkMain",
+      "-maxsat=" + files[i],
+      "-file-only"
+    ]
+
+    num_vars = "N/A"
+    num_clauses = "N/A"
+    out = subprocess.check_output(cmd, text=True)
+    for line in out.strip().split("\n"):
+      if line.startswith("CNF generated. "):
+        els = line[len("CNF generated. "):].split(", ")
+        num_vars = els[1][len("Total variables: "):]
+        num_clauses = els[2][len("Total clauses: "):]
+        break
+
+    print(f"{problems[i]},{num_vars},{num_clauses}")
