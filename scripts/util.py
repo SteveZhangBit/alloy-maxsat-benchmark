@@ -156,8 +156,8 @@ def run_maxsat_from_file(maxsat, timeout=60, partition=False, auto=False):
     else:
       openwbo = [
         "../../lib/open-wbo/open-wbo",
-        # "-formula=0",
-        # "-algorithm=2",
+        "-formula=0",
+        "-algorithm=2",
         cnf
       ]
 
