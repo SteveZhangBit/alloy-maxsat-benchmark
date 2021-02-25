@@ -20,6 +20,48 @@ java -jar bin/org.alloytools.alloy.dist.jar
 ```
 AlloyMax will run in GUI mode.
 
+### Try the Course Scheduling Example
+1. Open AlloyMax in GUI
+    ```
+    java -jar bin/org.alloytools.alloy.dist.jar
+    ```
+
+2. Open ```scripts/course/course_schedule.als```
+3. Generate any valid schedule:
+
+    3.1 Select: *Options -> Solver -> SAT4J*.
+
+    3.2 Select: *Execute -> Run AnySchedule*.
+
+    3.3 Click on the **Instance** on the right panel to open the visualizer.
+
+    3.4 In the visualizer, select *Theme -> Load Theme -> course/course.thm* for simpler visualization.
+4. Generate schedule that maximizes Alice's interests:
+
+    4.1 Select: *Options -> Solver -> OpenWBO*.
+
+        Note: Right now, OpenWBO only works on amd64 machines. Although SAT4JMax is cross-platform and works for Course problems, it does not work for some other problems (e.g., problems with softno).
+
+    4.2 Select: *Execute -> Run MaxInterests1*.
+
+    4.3 Repeat 3.3 and 3.4 for visualization.
+5. Generate schedule with hard constraints on time preferences.
+
+    5.1 Select: *Execute -> Run WithPrefer*. It should show UNSAT.
+6. Generate schedule with soft time preferences.
+
+    6.1 Uncomment Case 4.
+
+    6.2 Select: *Execute -> Run WithSoftPrefer*.
+
+        Note: comment it out if not using it, it may affect other problems.
+7. Generate schedule with priorities on goals.
+
+    7.1 Uncomment Case 5.
+
+    7.2 Select: *Execute -> Run WithSoftPreferAndPrior*.
+
+        Note: comment it out if not using it, it may affect other problems.
 ## Reproduce the results in the paper
 ### Course Scheduling
 ```

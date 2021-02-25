@@ -67,5 +67,49 @@ pred validSchedule[courses: Student -> Course] {
 // Case 1
 run AnySchedule {
   validSchedule[courses]
-  all stu: Student | some stu.interests & stu.courses
 }
+
+// Case 2.1
+run MaxInterests1 {
+	validSchedule[courses]
+	all stu: Student | maxsome stu.interests & stu.courses
+}
+
+// Case 2.2
+run MaxInterests2 {
+	validSchedule[courses]
+	all stu: Student | maxsome comm: set Course |
+		comm in stu.interests and comm in stu.courses
+}
+
+// Case 3
+run WithPrefer {
+	validSchedule[courses]
+	all stu: Student | maxsome stu.interests & stu.courses
+	no lec: Alice.courses.lectures | lec.day = Fri and lec.time = PM
+	no lec: Alice.courses.lectures | lec.day = Thu and lec.time = AM
+}
+
+// Uncomment the following for Case 4, leave it commented if not running it.
+// Case 4
+//soft fact {
+//	no lec: Alice.courses.lectures | lec.day = Fri and lec.time = PM
+//	no lec: Alice.courses.lectures | lec.day = Thu and lec.time = AM
+//}
+//
+//run WithSoftPrefer {
+//	validSchedule[courses]
+//	all stu: Student | maxsome stu.interests & stu.courses
+//}
+
+// Uncomment the following for Case 5, leave it commented if not running it.
+// Case 5
+//soft fact {
+//	no lec: Alice.courses.lectures | lec.day = Fri and lec.time = PM
+//	no lec: Alice.courses.lectures | lec.day = Thu and lec.time = AM
+//}
+//
+//run WithSoftPreferAndPrior {
+//	validSchedule[courses]
+//	all stu: Student | maxsome[1] stu.interests & stu.courses
+//}

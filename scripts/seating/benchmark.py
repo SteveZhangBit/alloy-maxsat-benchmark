@@ -115,12 +115,12 @@ def run(outpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_
   
   if run_sat:
     benchmark(problems, sat_files, timeout=timeout, repeat=repeat)
-  print("====================\nTable-based\n====================")
+  # print("====================\nTable-based\n====================")
   benchmark(problems, None, table_files, run_maxsat_one, run_maxsat_all,
             run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
-  print("====================\nTag-based\n====================")
-  benchmark(problems, None, tag_files, run_maxsat_one, run_maxsat_all,
-            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
+  # print("====================\nTag-based\n====================")
+  # benchmark(problems, None, tag_files, run_maxsat_one, run_maxsat_all,
+  #           run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
 def run_models(modelpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=False, run_maxsat_part=False,
@@ -139,12 +139,12 @@ def run_models(modelpath, run_sat=False, run_maxsat_one=False, run_maxsat_all=Fa
   
   if run_sat:
     benchmark(problems, sat_files, timeout=timeout, repeat=repeat)
-  print("====================\nTable-based\n====================")
+  # print("====================\nTable-based\n====================")
   benchmark(problems, None, table_files, run_maxsat_one, run_maxsat_all,
             run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
-  print("====================\nTag-based\n====================")
-  benchmark(problems, None, tag_files, run_maxsat_one, run_maxsat_all,
-            run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
+  # print("====================\nTag-based\n====================")
+  # benchmark(problems, None, tag_files, run_maxsat_one, run_maxsat_all,
+  #           run_maxsat_part, run_maxsat_part_auto, timeout, repeat)
 
 
 if __name__ == "__main__":

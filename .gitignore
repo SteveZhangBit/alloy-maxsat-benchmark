@@ -8,3 +8,5 @@ models*/
 *.log
 *cnf
 *.ipynb
+new_*.csv
+one_*.csv
