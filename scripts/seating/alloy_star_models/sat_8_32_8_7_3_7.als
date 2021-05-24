@@ -55,4 +55,4 @@ run {
     all p: Person | one seat'.p
     #seat'.tags < #seat.tags
   }
-} for exactly 6 Table, 7 int
+} for exactly 7 Table, 7 int
