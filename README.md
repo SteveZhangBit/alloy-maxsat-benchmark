@@ -37,7 +37,7 @@ You should be able to see the AlloyMax GUI show up on the screen.
 2. Open ```scripts/course/course_schedule.als```
 3. Generate any valid schedule:
 
-    3.1 Select: *Options -> Solver -> SAT4J or OpenWBO*.
+    3.1 Select: *Options -> Solver -> SAT4J*.
 
     3.2 Select: *Execute -> Run AnySchedule*.
 
@@ -88,16 +88,34 @@ Usage: benchmark.py
 
 *Note: Alloy generates tmp files to solve problems. You could clean your /tmp directory after running the benchmark.*
 
+*Note: The following benchmark problems may take a long time to complete.*
+
 ### Course Scheduling (Section 6.2.1)
 ```
 cd <path>/<to>/<package>/scripts/course
 
 # run AlloyMax benchmark:
 python benchmark.py -maxsat -maxsat_part -maxsat_part_auto -t=1800 -r=1 -m=models_20210203/
+```
+The output should be like:
+```
+problem,maxsat_trans,maxsat_solve,maxsat_result,part_trans,part_solve,part_result,auto_part_trans,auto_part_solve,auto_part_result
+30_40_3_6,9401,1039,SAT,9644,312,SAT,8765,236,SAT
+...
+```
+where ```problem``` refers to the problem name, ```maxsat_trans``` refers to the translation time of the problem, ```maxsat_solve``` refers to the actual solving time of the MaxSAT solver, ```part_trans``` and ```part_solve``` refer to the translation time and solving time with spec-based partitioning, and ```auto_part_trans``` and ```auto_part_solve``` refer to the translation time and solving time with auto-partitioning.
 
+```
 # run Alloy* benchmark:
 python benchmark_alloy_star.py -t=1800 -r=1 -m=alloy_star_models/
 ```
+Similarly, the output should be like:
+```
+problem,trans,solve,result
+30_40_3_6,12106,116018,SAT
+...
+```
+where ```trans``` refers to the translation time and ```solve``` refers to the actual solving time of the backend solver.
 
 ### CheckMate (Section 6.2.2)
 ```
