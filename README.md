@@ -85,6 +85,7 @@ Usage: benchmark.py
 	-m=<model path>
 	-from_file		Generate the CNF/WCNF file and then call the solver
 ```
+Under the folder for each benchmark problem, you can use the ```benchmark.py``` and ```benchmark_alloy_star.py``` script to reproduce the results from the paper. In additition, the ```results``` folder under each problem folder contains the benchmark results from our run.
 
 *Note: Alloy generates tmp files to solve problems. You could clean your /tmp directory after running the benchmark.*
 
