@@ -22,7 +22,7 @@ You can follow the instruction below to run the course scheduling problem in Sec
 2. Open ```scripts/course/course_schedule.als```
 3. Generate any valid schedule:
 
-    3.1 Select: *Options -> Solver -> SAT4J or OpenWBO*.
+    3.1 Select: *Options -> Solver -> SAT4J*.
 
     3.2 Select: *Execute -> Run AnySchedule*.
 
