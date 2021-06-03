@@ -18,3 +18,6 @@ OpenJDK 64-Bit Server VM (build 11.0.8+10-post-Ubuntu-0ubuntu120.04, mixed mode,
 Python 3.8.5
 numpy  1.19.4
 ```
+
+## Docker
+In addition, we provide a Docker image to try out AlloyMax. See INSTALL.md

@@ -11,6 +11,35 @@ java -jar bin/org.alloytools.alloy.dist.jar
 ```
 You should be able to see the AlloyMax GUI show up on the screen.
 
+## Docker Image
+In addition, we provide a Docker image. In order to build the Docker image:
+```
+cd <download directory>/docker
+docker build -t alloymax .
+```
+Then, to run the docker image:
+```
+docker run -p 5900:5900 -it --rm alloymax
+```
+The package is downloaded at the root ```/``` directory. You can test the benchmarks directly from the command-line interface.
+
+### VNC for GUI
+You can also run AlloyMax in GUI mode through VNC. In order to connect to the Docker container through VNC, you should install [TigerVNC viewer](https://tigervnc.org/) on your **host** machine: e.g., on Ubuntu
+```
+sudo apt-get install tigervnc-viewer
+```
+Other systems can follow the instruction on the website of TigerVNC.
+
+To access the container through VNC, first, launch the VNC server from the Docker container:
+```
+/startup-vnc.sh
+```
+
+Then, to connect to the VNC server from your host machine:
+```
+vncviewer 127.0.0.1
+```
+
 ## Try out AlloyMax (Example in Section 2)
 You can follow the instruction below to run the course scheduling problem in Section 2 of the paper.
 

@@ -2,7 +2,7 @@
 This is the reproduction package of the benchmarks used for the work *AlloyMax: Bringing Maximum Satisfaction to Relational Specifications* which will appear in FSE 2021. This package contains AlloyMax executable, the necessary libraries, the models used in the paper, and the scripts for running the benchmark.
 
 ## System Requirements
-AlloyMax requires Java version >= 1.8. Although AlloyMax can run on both Windows and Linux machines, some of the back-end Sat/MaxSAT solvers can only run on Linux. Specifically, we use OpenWBO as the MaxSAT solver in our paper which can only run on Linux. **Therefore, we suggest using a Linux machine to reproduce our results.**
+AlloyMax requires Java version >= 1.8. Although AlloyMax can run on both Windows and Linux machines, some of the back-end Sat/MaxSAT solvers can only run on Linux. Specifically, we use OpenWBO (to support partitioning) as the MaxSAT solver in our paper which can only run on Linux. **Therefore, we suggest using a Linux machine to reproduce our results.**
 
 Also, some models requires a large memory. **We suggest using a machine with at least 16GB memory.** We ran the benchmarks on a machine with 24GB memory.
 
@@ -30,6 +30,35 @@ git clone https://github.com/SteveZhangBit/alloy-maxsat-benchmark.git
 java -jar bin/org.alloytools.alloy.dist.jar
 ```
 You should be able to see the AlloyMax GUI show up on the screen.
+
+## Docker Image
+In addition, we provide a Docker image. In order to build the Docker image:
+```
+cd <download directory>/docker
+docker build -t alloymax .
+```
+Then, to run the docker image:
+```
+docker run -p 5900:5900 -it --rm alloymax
+```
+The package is downloaded at the root ```/``` directory. You can test the benchmarks directly from the command-line interface.
+
+### VNC for GUI
+You can also run AlloyMax in GUI mode through VNC. In order to connect to the Docker container through VNC, you should install [TigerVNC viewer](https://tigervnc.org/) on your **host** machine: e.g., on Ubuntu
+```
+sudo apt-get install tigervnc-viewer
+```
+Other systems can follow the instruction on the website of TigerVNC.
+
+To access the container through VNC, first, launch the VNC server from the Docker container:
+```
+/startup-vnc.sh
+```
+
+Then, to connect to the VNC server from your host machine:
+```
+vncviewer 127.0.0.1
+```
 
 ## Try out AlloyMax (Example in Section 2)
 1. Open AlloyMax in GUI
