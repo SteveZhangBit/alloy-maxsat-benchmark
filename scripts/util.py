@@ -338,8 +338,8 @@ def options():
     print("\t-maxsat_all\t\tFind all optimal solutions")
     print("\t-maxsat_part\t\tFind one optimal solution by using Max-SAT with user partitioning")
     print("\t-maxsat_part_auto\tFind one optimal solution by using auto partitioning")
-    print("\t-t=<timeout>")
-    print("\t-r=<repeat>")
+    print("\t-t=<timeout> in seconds")
+    print("\t-r=<repeat>\t\tNumber of times to repeat the run")
     print("\t-m=<model path>")
     print("\t-from_file\t\tGenerate the CNF/WCNF file and then call the solver")
     exit(0)
@@ -374,8 +374,8 @@ def alloy_star_options():
 
   if len(sys.argv) < 2:
     print("Usage: benchmark.py")
-    print("\t-t=<timeout>")
-    print("\t-r=<repeat>")
+    print("\t-t=<timeout> in seconds")
+    print("\t-r=<repeat> number of time to repeat the run")
     print("\t-m=<model path>")
     exit(0)
   else:

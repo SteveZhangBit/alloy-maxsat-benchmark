@@ -112,8 +112,8 @@ Usage: benchmark.py
 	-maxsat_all		Find all optimal solutions
 	-maxsat_part		Find one optimal solution by using Max-SAT with user partitioning
 	-maxsat_part_auto	Find one optimal solution by using auto partitioning
-	-t=<timeout>
-	-r=<repeat>
+	-t=<timeout> in seconds
+	-r=<repeat>		Number of times to repeat the run
 	-m=<model path>
 	-from_file		Generate the CNF/WCNF file and then call the solver
 ```
@@ -149,6 +149,8 @@ problem,trans,solve,result
 ...
 ```
 where ```trans``` refers to the translation time and ```solve``` refers to the actual solving time of the backend solver.
+
+*Note: The time unit in the output is milliseconds.*
 
 ### CheckMate (Section 6.2.2)
 ```
