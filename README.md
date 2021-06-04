@@ -194,6 +194,13 @@ python benchmark_alloy_star.py -t=1800 -r=1 -m=alloy_star_models/
 ```
 *Known issue:* Although we set the same Alloy* solving options, the SMS problems can be solved from the GUI mode but in CLI mode they will have StackOverflow errors. Thus, we manually run the problems in GUI mode to collect the results.
 
+### run.sh
+You can also use the ```run.sh``` script to run all the benchmark problems at once.
+```
+cd <path>/<to>/<package>/scripts
+sh run.sh
+```
+
 ## AlloyMax Source Code
 You can also access the source code of AlloyMax from: https://github.com/SteveZhangBit/org.alloytools.alloy/tree/maxsat
 
