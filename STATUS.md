@@ -1,9 +1,9 @@
-## Badge
-We want to apply for **Functional, Reusable, Available** badges.
+## Badges
+We aare applying for **Functional, Reusable, Available** badges.
 
 ## Why
-We make all the artifacts related to our work publicly accessible, including the AlloyMax executable, its source code, the benchmark problems, and the scripts to run the benchmark. Thus, we want to apply **Available** badge.
+**Available** badge: We make all the artifacts related to our work publicly accessible, including the AlloyMax executable, its source code, the benchmark problems, and the scripts to run the benchmark.
 
-Also, we provide instructions to run AlloyMax and reproduce the results from our paper. Thus, we want to apply for **Functional** badge.
+**Functional** badge: We provide sufficient **documentation** and **exercisable** scripts to run AlloyMax and reproduce the results that are **consistent** and **completete** with respect to those presented in our paper. 
 
-Finally, AlloyMax is a general purpose modeling tool. Researchers can use AlloyMax to solve any other problems that can be modeled in Alloy. Thus, we also want to apply for **Reusable** badge.
+**Reusable** badge: Finally, AlloyMax is a general purpose modeling tool built as an extension on top of another widely used tool, the Alloy Analyzer. Researchers  and practitioners can use AlloyMax to solve any other problems that can be modeled in Alloy. 
