@@ -112,7 +112,7 @@ Usage: benchmark.py
 	-sat			Enumerate all solutions by using SAT
 	-maxsat			Find one optimal solution
 	-maxsat_all		Find all optimal solutions
-	-maxsat_part		Find one optimal solution by using Max-SAT with user partitioning
+	-maxsat_part		Find one optimal solution by using Max-SAT with spec partitioning
 	-maxsat_part_auto	Find one optimal solution by using auto partitioning
 	-t=<timeout> in seconds
 	-r=<repeat>		Number of times to repeat the run
@@ -194,12 +194,13 @@ python benchmark_alloy_star.py -t=1800 -r=1 -m=alloy_star_models/
 ```
 *Known issue:* Although we set the same Alloy* solving options, the SMS problems can be solved from the GUI mode but in CLI mode they will have StackOverflow errors. Thus, we manually run the problems in GUI mode to collect the results.
 
-### run.sh
+### Running all benchmarks
 You can also use the ```run.sh``` script to run all the benchmark problems at once.
 ```
 cd <path>/<to>/<package>/scripts
 sh run.sh
 ```
+The result of each benchmark run can be found in one_result_max.csv, one_result_maxsat_part.csv (for spec-based partitioning), and one_result_maxsat_part_auto.cvs (for auto-partitioning) in the respective directories.
 
 ## AlloyMax Source Code
 You can also access the source code of AlloyMax from: https://github.com/SteveZhangBit/org.alloytools.alloy/tree/maxsat
