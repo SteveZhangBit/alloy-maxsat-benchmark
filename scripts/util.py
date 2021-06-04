@@ -38,7 +38,15 @@ def run_sat(sat, timeout=60, from_file=False):
           num_inst = line[len("Enumeration number: "):]
       if total_time > 0:
         solve_time = total_time - trans_time
+      if trans_time == "N/A" or solve_time == "N/A" or num_inst == "N/A":
+        print("Error when reading output, might be environment issues, please try the Docker image.")
+        print("Output from AlloyMax:")
+        print(out)
+        exit(-1)
     except subprocess.TimeoutExpired:
+      trans_time = "T/O"
+      solve_time = "T/O"
+      num_inst = "T/O"
       os.killpg(proc.pid, signal.SIGINT)
       out = proc.communicate()[0]
       for line in out.strip().split("\n"):
@@ -92,7 +100,15 @@ def run_maxsat(maxsat, timeout=60, partition=False, auto=False, from_file=False)
           sat = line[len("Solved: "):]
       if total_time > 0:
         solve_time = total_time - trans_time
+      if trans_time == "N/A" or solve_time == "N/A" or sat == "N/A":
+        print("Error when reading output, might be environment issues, please try the Docker image.")
+        print("Output from AlloyMax:")
+        print(out)
+        exit(-1)
     except subprocess.TimeoutExpired:
+      trans_time = "T/O"
+      solve_time = "T/O"
+      sat = "T/O"
       os.killpg(proc.pid, signal.SIGINT)
       out = proc.communicate()[0]
       for line in out.strip().split("\n"):
@@ -130,12 +146,18 @@ def run_maxsat_from_file(maxsat, timeout=60, partition=False, auto=False):
   trans_time = "N/A"
   solve_time = "N/A"
   sat = "N/A"
-  out = subprocess.check_output(cmd, text=True)
-  for line in out.strip().split("\n"):
-    if line.startswith("Translation time: "):
-      trans_time = int(line[len("Translation time: "):])
-    elif line.startswith("CNF File: "):
-      cnf = line[len("CNF File: "):]
+  try:
+    out = subprocess.check_output(cmd, text=True, timeout=timeout)
+    for line in out.strip().split("\n"):
+      if line.startswith("Translation time: "):
+        trans_time = int(line[len("Translation time: "):])
+      elif line.startswith("CNF File: "):
+        cnf = line[len("CNF File: "):]
+  except subprocess.TimeoutExpired:
+    trans_time = "T/O"
+    solve_time = "T/O"
+    sat = "T/O"
+    return f"{trans_time},{solve_time},{sat}"
   
   if cnf is not None:
     if partition:
@@ -161,6 +183,7 @@ def run_maxsat_from_file(maxsat, timeout=60, partition=False, auto=False):
         cnf
       ]
 
+    timeout = max(timeout - round(trans_time / 1000), 1)
     start_time = time.time()
     with subprocess.Popen(openwbo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, preexec_fn=os.setsid) as proc:
       try:
@@ -171,7 +194,14 @@ def run_maxsat_from_file(maxsat, timeout=60, partition=False, auto=False):
             sat = "SAT"
           elif line.startswith("s UNSATISFIABLE"):
             sat = "UNSAT"
+        if sat == "N/A":
+          print("Error when reading output, might be environment issues, please try the Docker image.")
+          print("Output from AlloyMax:")
+          print(out)
+          exit(-1)
       except subprocess.TimeoutExpired:
+        solve_time = "T/O"
+        sat = "T/O"
         os.killpg(proc.pid, signal.SIGINT)
         out = proc.communicate()[0]
       except KeyboardInterrupt as e:
@@ -201,12 +231,18 @@ def run_maxsat_all(maxsat, timeout=60, from_file=False):
   trans_time = "N/A"
   solve_time = "N/A"
   num_inst = "N/A"
-  out = subprocess.check_output(cmd, text=True)
-  for line in out.strip().split("\n"):
-    if line.startswith("Translation time: "):
-      trans_time = int(line[len("Translation time: "):])
-    elif line.startswith("CNF File: "):
-      cnf = line[len("CNF File: "):]
+  try:
+    out = subprocess.check_output(cmd, text=True, timeout=timeout)
+    for line in out.strip().split("\n"):
+      if line.startswith("Translation time: "):
+        trans_time = int(line[len("Translation time: "):])
+      elif line.startswith("CNF File: "):
+        cnf = line[len("CNF File: "):]
+  except subprocess.TimeoutExpired:
+    trans_time = "T/O"
+    solve_time = "T/O"
+    num_inst = "T/O"
+    return f"{trans_time},{solve_time},{num_inst}"
   
   if cnf is not None:
     openwbo = [
@@ -217,6 +253,7 @@ def run_maxsat_all(maxsat, timeout=60, from_file=False):
       cnf
     ]
 
+    timeout = max(timeout - round(trans_time / 1000), 1)
     start_time = time.time()
     with subprocess.Popen(openwbo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, preexec_fn=os.setsid) as proc:
       try:
@@ -226,7 +263,14 @@ def run_maxsat_all(maxsat, timeout=60, from_file=False):
           if line.startswith("c Optimal Solutions: "):
             num_inst = line[len("c Optimal Solutions: "):]
             break
+        if num_inst == "N/A":
+          print("Error when reading output, might be environment issues, please try the Docker image.")
+          print("Output from AlloyMax:")
+          print(out)
+          exit(-1)
       except subprocess.TimeoutExpired:
+        solve_time = "T/O"
+        num_inst = "T/O"
         os.killpg(proc.pid, signal.SIGINT)
         out = proc.communicate()[0]
         for line in out.strip().split("\n"):
@@ -381,7 +425,14 @@ def run_alloy_star(sat_file, timeout=60):
           sat = line[len("Solved: "):]
       if total_time > 0:
         solve_time = total_time - trans_time
+      if trans_time == "N/A" or solve_time == "N/A" or sat == "N/A":
+        print("Error when reading output from Alloy*:")
+        print(out)
+        exit(-1)
     except subprocess.TimeoutExpired:
+      trans_time = "T/O"
+      solve_time = "T/O"
+      sat = "T/O"
       os.killpg(proc.pid, signal.SIGINT)
       out = proc.communicate()[0]
       for line in out.strip().split("\n"):

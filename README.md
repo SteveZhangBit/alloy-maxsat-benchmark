@@ -37,7 +37,7 @@ In addition, we provide a Docker image. In order to build the Docker image:
 cd <download directory>/docker
 docker build -t alloymax .
 ```
-Then, to run the docker image:
+The Docker image takes 2.0GB disk space. Then, to run the docker image:
 ```
 docker run -p 5900:5900 -it --rm alloymax
 ```
