@@ -43,6 +43,8 @@ docker run -p 5900:5900 -it --rm alloymax
 ```
 The package is downloaded at the root ```/``` directory. You can test the benchmarks directly from the command-line interface.
 
+*Note for Mac/Windows Users: Docker runs on a virtual machine on Mac/Windows. Thus, the memory is limited to a given number in the setting (2GB by default). You should change it to a larger number (e.g., 16Gb) to avoid memory issues.*
+
 ### VNC for GUI
 You can also run AlloyMax in GUI mode through VNC. In order to connect to the Docker container through VNC, you should install [TigerVNC viewer](https://tigervnc.org/) on your **host** machine: e.g., on Ubuntu
 ```
@@ -112,8 +114,8 @@ Usage: benchmark.py
 	-maxsat_all		Find all optimal solutions
 	-maxsat_part		Find one optimal solution by using Max-SAT with user partitioning
 	-maxsat_part_auto	Find one optimal solution by using auto partitioning
-	-t=<timeout>            in seconds
-	-r=<repeat>
+	-t=<timeout> in seconds
+	-r=<repeat>		Number of times to repeat the run
 	-m=<model path>
 	-from_file		Generate the CNF/WCNF file and then call the solver
 ```
@@ -149,6 +151,8 @@ problem,trans,solve,result
 ...
 ```
 where ```trans``` refers to the translation time and ```solve``` refers to the actual solving time of the backend solver.
+
+*Note: The time unit in the output is milliseconds.*
 
 ### CheckMate (Section 6.2.2)
 ```

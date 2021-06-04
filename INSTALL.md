@@ -23,6 +23,8 @@ docker run -p 5900:5900 -it --rm alloymax
 ```
 The package is downloaded at the root ```/``` directory. You can test the benchmarks directly from the command-line interface.
 
+*Note for Mac/Windows Users: Docker runs on a virtual machine on Mac/Windows. Thus, the memory is limited to a given number in the setting (2GB by default). You should change it to a larger number (e.g., 16Gb) to avoid memory issues.*
+
 ### VNC for GUI
 You can also run AlloyMax in GUI mode through VNC. In order to connect to the Docker container through VNC, you should install [TigerVNC viewer](https://tigervnc.org/) on your **host** machine: e.g., on Ubuntu
 ```
