@@ -1,12 +1,12 @@
 # AlloyMax Benchmark
-This is the reproduction package of the benchmarks used for the work *AlloyMax: Bringing Maximum Satisfaction to Relational Specifications* which will appear in FSE 2021. This package contains AlloyMax executable, the necessary libraries, the models used in the paper, and the scripts for running the benchmark.
+This is the reproduction package of the benchmarks used for the work *AlloyMax: Bringing Maximum Satisfaction to Relational Specifications,* which will appear in FSE 2021. This package contains AlloyMax executable, the necessary libraries, the models used in the paper, and the scripts for running the benchmark.
 
 ## System Requirements
-AlloyMax requires Java version >= 1.8. Although AlloyMax can run on both Windows and Linux machines, some of the back-end Sat/MaxSAT solvers can only run on Linux. Specifically, we use OpenWBO (to support partitioning) as the MaxSAT solver in our paper which can only run on Linux. **Therefore, we suggest using a Linux machine to reproduce our results.**
+AlloyMax requires Java version >= 1.8. Although AlloyMax can run on both Windows and Linux machines, some of the back-end Sat/MaxSAT solvers can only run on Linux. Specifically, we use OpenWBO (to support partitioning) as the MaxSAT solver in our paper, which can only run on Linux. **Therefore, we suggest using a Linux machine to reproduce our results.**
 
 Also, some models requires a large memory. **We suggest using a machine with at least 16GB memory.** We ran the benchmarks on a machine with 24GB memory.
 
-In addition, the benchmark scripts require Python 3.8 and numpy. The program has been tested under,
+In addition, the benchmark scripts require Python 3.8 and numpy. The program has been tested under the following versions of the software:
 ```
 Java:
 openjdk version "11.0.8" 2020-07-14
@@ -106,7 +106,7 @@ vncviewer 127.0.0.1
         Note: comment it out if not using it, it may affect other problems.
 
 ## Reproduce the benchmark results in the paper (Section 6)
-We can use the ```benchmark.py``` script to run the benchmark. The script allows different options to enable different solving mode. Run ```python benchmark.py``` should see:
+We can use the ```benchmark.py``` script to run the benchmark. The script allows different options to enable different solving mode. Running ```python benchmark.py``` should display:
 ```
 Usage: benchmark.py
 	-sat			Enumerate all solutions by using SAT
@@ -138,7 +138,7 @@ problem,maxsat_trans,maxsat_solve,maxsat_result,part_trans,part_solve,part_resul
 30_40_3_6,9401,1039,SAT,9644,312,SAT,8765,236,SAT
 ...
 ```
-where ```problem``` refers to the problem name, ```maxsat_trans``` refers to the translation time of the problem, ```maxsat_solve``` refers to the actual solving time of the MaxSAT solver, ```part_trans``` and ```part_solve``` refer to the translation time and solving time with spec-based partitioning, and ```auto_part_trans``` and ```auto_part_solve``` refer to the translation time and solving time with auto-partitioning.
+where ```problem``` refers to the problem name, ```maxsat_trans``` refers to the translation time of the problem, ```maxsat_solve``` refers to the actual solving time of the MaxSAT solver, ```part_trans``` and ```part_solve``` refer to the translation time and solving time with spec-based partitioning, and ```auto_part_trans``` and ```auto_part_solve``` refer to the translation time and solving time with auto-partitioning. All times are in ms.
 
 ```
 # run Alloy* benchmark:
