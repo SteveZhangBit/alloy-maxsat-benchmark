@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/326310778.svg)](https://zenodo.org/badge/latestdoi/326310778)
+
 # AlloyMax Benchmark
 This is the reproduction package of the benchmarks used for the work *AlloyMax: Bringing Maximum Satisfaction to Relational Specifications,* which will appear in FSE 2021. This package contains AlloyMax executable, the necessary libraries, the models used in the paper, and the scripts for running the benchmark.
 
