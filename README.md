@@ -188,11 +188,18 @@ cd <path>/<to>/<package>/scripts/SMS
 
 # run AlloyMax benchmark:
 python benchmark.py -maxsat -maxsat_part -maxsat_part_auto -t=1800 -r=1 -m=models_20210203/
-
-# run Alloy* benchmark:
-python benchmark_alloy_star.py -t=1800 -r=1 -m=alloy_star_models/
 ```
-*Known issue:* Although we set the same Alloy* solving options, the SMS problems can be solved from the GUI mode but in CLI mode they will have StackOverflow errors. Thus, we manually run the problems in GUI mode to collect the results.
+*Known issue:* Although we set the same Alloy* solving options, the SMS problems can be solved from the GUI mode but in CLI mode they will have StackOverflow errors. Thus, we manually run the problems in GUI mode to collect the results. See the following commands:
+
+1. Start Alloy* in GUI mode
+```
+java -jar bin/hola-0.3_2019-03-23.jar
+```
+2. (Optinal) Change the solver to Glucose or Minisat (which only works on Linux/Mac).
+
+    Select *Options -> Solver -> Glucose/MiniSat*.
+3. Open ```<path>/<to>/<package>/scripts/SMS/alloy_star_models/<problem>.als```
+4. Click *Execute* to solve the problem.
 
 ### Running all benchmarks
 You can also use the ```run.sh``` script to run all the benchmark problems at once.
