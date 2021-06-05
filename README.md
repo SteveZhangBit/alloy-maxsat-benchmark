@@ -189,6 +189,8 @@ cd <path>/<to>/<package>/scripts/SMS
 # run AlloyMax benchmark:
 python benchmark.py -maxsat -maxsat_part -maxsat_part_auto -t=1800 -r=1 -m=models_20210203/
 ```
+
+#### Run Alloy* Problems for SMS in GUI
 *Known issue:* Although we set the same Alloy* solving options, the SMS problems can be solved from the GUI mode but in CLI mode they will have StackOverflow errors. Thus, we manually run the problems in GUI mode to collect the results. See the following commands:
 
 1. Start Alloy* in GUI mode
